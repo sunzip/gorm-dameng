@@ -1,4 +1,5 @@
 # GORM DM8 Driver
+base https://github.com/godoes/gorm-dameng/tree/v0.5.0
 
 基于达梦数据库官方 [Go 驱动源码](https://download.dameng.com/eco/adapter/resource/go/go-20230418.zip)
 二次开发整理的开箱即用的 [GORM](https://gorm.io/zh_CN/) 达梦数据库驱动，无需单独复制驱动源码到项目中。

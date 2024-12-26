@@ -31,19 +31,22 @@ func Create(db *gorm.DB) {
 		onConflict, hasConflict = c.Expression.(clause.OnConflict)
 
 		if hasConflict {
-			if len(db.Statement.Schema.PrimaryFields) > 0 {
-				columnsMap := map[string]bool{}
-				for _, column := range values.Columns {
-					columnsMap[column.Name] = true
-				}
-
-				for _, field := range db.Statement.Schema.PrimaryFields {
-					if _, ok := columnsMap[field.DBName]; !ok {
-						hasConflict = false
+			// hiar，先判断是否配置columns，然后是默认的id
+			if !(len(onConflict.Columns) > 0) {
+				if len(db.Statement.Schema.PrimaryFields) > 0 {
+					columnsMap := map[string]bool{}
+					for _, column := range values.Columns {
+						columnsMap[column.Name] = true
 					}
+
+					for _, field := range db.Statement.Schema.PrimaryFields {
+						if _, ok := columnsMap[field.DBName]; !ok {
+							hasConflict = false
+						}
+					}
+				} else {
+					hasConflict = false
 				}
-			} else {
-				hasConflict = false
 			}
 		}
 
@@ -107,7 +110,7 @@ func Create(db *gorm.DB) {
 					}
 					_ = db.Statement.WriteByte(')')
 
-					//outputInserted(db)
+					// outputInserted(db)
 
 					_, _ = db.Statement.WriteString(" VALUES ")
 
@@ -175,7 +178,7 @@ func Create(db *gorm.DB) {
 		}
 		// map insert support return increment id
 		// https://github.com/go-gorm/gorm/pull/6662
-		var pkFieldName = "@id"
+		pkFieldName := "@id"
 		if db.Statement.Schema != nil {
 			if db.Statement.Schema.PrioritizedPrimaryField == nil || !db.Statement.Schema.PrioritizedPrimaryField.HasDefaultValue {
 				return
@@ -210,7 +213,7 @@ func Create(db *gorm.DB) {
 		default:
 			switch db.Statement.ReflectValue.Kind() {
 			case reflect.Slice, reflect.Array:
-				//if config.LastInsertIDReversed {
+				// if config.LastInsertIDReversed {
 				for i := db.Statement.ReflectValue.Len() - 1; i >= 0; i-- {
 					rv := db.Statement.ReflectValue.Index(i)
 					if reflect.Indirect(rv).Kind() != reflect.Struct {
@@ -271,17 +274,26 @@ func MergeCreate(db *gorm.DB, onConflict clause.OnConflict, values clause.Values
 	_, _ = db.Statement.WriteString(") ON ")
 
 	var where clause.Where
-	for _, field := range db.Statement.Schema.PrimaryFields {
-		where.Exprs = append(where.Exprs, clause.Eq{
-			Column: clause.Column{Table: db.Statement.Table, Name: field.DBName},
-			Value:  clause.Column{Table: "excluded", Name: field.DBName},
-		})
+	if len(onConflict.Columns) > 0 {
+		for _, field := range onConflict.Columns {
+			where.Exprs = append(where.Exprs, clause.Eq{
+				Column: clause.Column{Table: db.Statement.Table, Name: field.Name},
+				Value:  clause.Column{Table: "excluded", Name: field.Name},
+			})
+		}
+	} else {
+		for _, field := range db.Statement.Schema.PrimaryFields {
+			where.Exprs = append(where.Exprs, clause.Eq{
+				Column: clause.Column{Table: db.Statement.Table, Name: field.DBName},
+				Value:  clause.Column{Table: "excluded", Name: field.DBName},
+			})
+		}
 	}
 	where.Build(db.Statement)
 
 	if len(onConflict.DoUpdates) > 0 {
 		// 将UPDATE子句中出现在关联条件中的列去除（即上面的ON子句），否则会报错：-4064:不能更新关联条件中的列
-		var withoutOnColumns = make([]clause.Assignment, 0, len(onConflict.DoUpdates))
+		withoutOnColumns := make([]clause.Assignment, 0, len(onConflict.DoUpdates))
 	a:
 		for _, assignment := range onConflict.DoUpdates {
 			for _, field := range db.Statement.Schema.PrimaryFields {
@@ -328,7 +340,7 @@ func MergeCreate(db *gorm.DB, onConflict clause.OnConflict, values clause.Values
 	}
 
 	_, _ = db.Statement.WriteString(")")
-	//outputInserted(db)
+	// outputInserted(db)
 	_, _ = db.Statement.WriteString(";")
 
 	// merge into 语句插入的记录，无法通过LastInsertID获取
