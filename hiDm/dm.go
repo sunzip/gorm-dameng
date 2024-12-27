@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	dameng "github.com/godoes/gorm-dameng"
+	dameng "github.com/sunzip/gorm-dameng"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 )

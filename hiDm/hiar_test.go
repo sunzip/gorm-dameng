@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	dameng "github.com/godoes/gorm-dameng"
+	dameng "github.com/sunzip/gorm-dameng"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	gormlog "gorm.io/gorm/logger"
