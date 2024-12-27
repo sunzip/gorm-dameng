@@ -1,6 +1,8 @@
 module github.com/godoes/gorm-dameng
 
-go 1.20
+go 1.22.0
+
+toolchain go1.22.10
 
 require (
 	github.com/golang/snappy v0.0.4
@@ -11,5 +13,7 @@ require (
 require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	go.opentelemetry.io/otel v1.33.0 // indirect
+	go.opentelemetry.io/otel/trace v1.33.0 // indirect
 	gorm.io/hints v1.1.2 // indirect
 )
