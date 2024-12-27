@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/migrator"
 	"gorm.io/gorm/schema"
+	"gorm.io/hints"
 )
 
 type Config struct {
@@ -77,8 +78,31 @@ func (d Dialector) Initialize(db *gorm.DB) (err error) {
 	}
 	callbacks.RegisterDefaultCallbacks(db, callbackConfig)
 	_ = db.Callback().Create().Replace("gorm:create", Create)
-
+	RegisterIndexHintCallback(db)
 	return
+}
+
+// hiar
+func RegisterIndexHintCallback(db *gorm.DB) {
+	// 替换 Query 回调，加入自定义逻辑
+	db.Callback().Query().Before("gorm:query").Register("dm:replace_index_hint", func(db *gorm.DB) {
+		// 遍历 Statement.Clauses，检查是否包含 IndexHint
+		if hintClause, ok := db.Statement.Clauses["FROM"]; ok {
+			if originalHint, ok := hintClause.AfterExpression.(hints.IndexHint); ok {
+				db.Statement.Clauses["FROM"] = clause.Clause{
+					Name:                hintClause.Name,
+					BeforeExpression:    hintClause.BeforeExpression,
+					AfterNameExpression: hintClause.AfterNameExpression,
+					AfterExpression: DmIndexHint{
+						Type: originalHint.Type,
+						Keys: originalHint.Keys,
+					},
+					Expression: hintClause.Expression,
+					Builder:    IndexHintFromClauseBuilder,
+				}
+			}
+		}
+	})
 }
 
 func (d Dialector) DefaultValueOf(*schema.Field) clause.Expression {

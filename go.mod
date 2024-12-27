@@ -11,4 +11,5 @@ require (
 require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	gorm.io/hints v1.1.2 // indirect
 )
