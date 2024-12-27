@@ -1,4 +1,5 @@
-module github.com/godoes/gorm-dameng
+module github.com/sunzip/gorm-dameng
+// fork from  github.com/godoes/gorm-dameng
 
 go 1.22.0
 
